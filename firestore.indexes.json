@@ -10,18 +10,6 @@
         { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" },
         { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
       ]
-    },
-    {
-      "collectionGroup": "bookingGuards",
-      "fieldPath": "expiresAt",
-      "ttl": true,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "bookingRateLimits",
-      "fieldPath": "expiresAt",
-      "ttl": true,
-      "indexes": []
     }
   ]
 }

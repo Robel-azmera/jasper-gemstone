@@ -62,7 +62,8 @@ gemstone_viewing | gemstone_consultation | custom_inquiry | business_appointment
 `gemstones/{id}` holds `type`, `shape`, `images`, `review` and `certificate` alongside the stone's details. The gem types
 and cuts are listed in `src/lib/gemstones/catalog.ts`.
 
-Server-only collections are `bookingGuards` (duplicate and idempotency guards) and `bookingRateLimits`, both with TTL on `expiresAt`.
+Server-only collections are `bookingGuards` (duplicate and idempotency guards) and `bookingRateLimits`. Both store an `expiresAt` field. TTL auto-cleanup needs the Blaze (paid) plan; once billing is on,
+add TTL policies on `expiresAt` in `firestore.indexes.json`. Expired entries are harmless and ignored in the meantime.
 
 ## Setup
 

@@ -43,7 +43,10 @@ function fit(points: Pt[], w: number, h: number): Pt[] {
   const s = Math.min(w / (maxX - minX), h / (maxY - minY));
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;
-  return points.map(([x, y]) => [50 + (x - cx) * s, 50 + (y - cy) * s]);
+  // Rounded so the trig/pow results (which may differ in the last bits between
+  // server and browser) can't produce different markup and break hydration.
+  const r = (v: number) => Math.round(v * 100) / 100;
+  return points.map(([x, y]) => [r(50 + (x - cx) * s), r(50 + (y - cy) * s)]);
 }
 
 function outlineFor(shape: string): { pts: Pt[]; style: Style } {
@@ -215,7 +218,8 @@ export function GemArt({ shape, palette = ["#8b1a1a", "#e9a0a0"], mode = "color"
             key={i}
             points={poly(f)}
             fill={l > 0 ? "#fff" : "#000"}
-            fillOpacity={l > 0 ? 0.04 + l * 0.32 : 0.04 + -l * 0.28}
+            // Rounded so server and browser render identical strings (float math can differ in the last digits).
+            fillOpacity={(l > 0 ? 0.04 + l * 0.32 : 0.04 + -l * 0.28).toFixed(3)}
             stroke="#fff"
             strokeOpacity="0.18"
             strokeWidth="0.3"
