@@ -1,26 +1,162 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Jasper Gemstone – palette taken from the logo's garnet red. */
+@theme {
+  --color-ivory: #fbf8f3;
+  --color-pearl: #f4efe7;
+  --color-ink: #1c1917;
+  --color-stone: #6f6760;
+  --color-mist: #a8a29e;
+  --color-line: #e6dfd4;
+  --color-garnet: #8b1a1a;
+  --color-garnet-deep: #6b1212;
+  --color-garnet-soft: #f6e9e7;
+  --color-gold: #a8834a;
+  --color-success: #2f6b4f;
+  --color-success-soft: #e8f2ec;
+  --color-warning: #8a5a12;
+  --color-warning-soft: #fbf1df;
+  --color-danger: #a12a1f;
+  --color-danger-soft: #fbeae8;
+  --color-info: #2c4f7c;
+  --color-info-soft: #e8eef7;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-jost), "Jost", system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --animate-fade-in: fade-in 220ms ease-out both;
+  --animate-rise-in: rise-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in: slide-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(32px); }
+    to { opacity: 1; transform: none; }
   }
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-garnet);
+  color: var(--color-ivory);
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+/* Form primitives used by the booking form and admin. */
+.field-label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-stone);
+  margin-bottom: 0.45rem;
+}
+.field-input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 2px;
+  padding: 0.8rem 0.9rem;
+  font-size: 1rem; /* ≥16px prevents iOS zoom */
+  color: var(--color-ink);
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.field-input::placeholder {
+  color: var(--color-mist);
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--color-garnet);
+  box-shadow: 0 0 0 3px rgb(139 26 26 / 0.12);
+}
+.field-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+.field-error {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--color-danger);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding: 0 1.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 1px;
+  transition: background-color 180ms, color 180ms, border-color 180ms, opacity 180ms;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--color-garnet);
+  color: var(--color-ivory);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-garnet-deep);
+}
+.btn-outline {
+  border: 1px solid var(--color-ink);
+  color: var(--color-ink);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--color-ink);
+  color: var(--color-ivory);
+}
+.btn-ghost {
+  color: var(--color-ink);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--color-garnet);
+}
+.btn-sm {
+  min-height: 2.25rem;
+  padding: 0 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-garnet);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

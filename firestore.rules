@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// Jasper Gemstone – Firestore security rules.
+//
+// * Public visitors never touch `bookings` directly. Submissions go through
+//   POST /api/bookings, which validates input and writes with the Admin SDK
+//   (the Admin SDK bypasses these rules).
+// * Only users whose ID token carries the custom claim `admin: true` can read,
+//   update or delete bookings. Grant it with `npm run set-admin -- <email>`.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Public catalogue.
+    match /gemstones/{gemstoneId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if false;            // only via the server API
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() && validAdminUpdate();
+
+      function validAdminUpdate() {
+        let d = request.resource.data;
+        let changed = d.diff(resource.data).affectedKeys();
+        return changed.hasOnly([
+            'status', 'adminNotes', 'updatedAt', 'read', 'readAt',
+            'customerName', 'phoneNumber', 'email', 'contactPreference',
+            'bookingType', 'preferredDate', 'preferredTime', 'message'
+          ])
+          && d.status in ['Pending', 'Confirmed', 'Contacted', 'Completed', 'Cancelled']
+          && d.contactPreference in ['Phone', 'WhatsApp', 'Email']
+          && d.bookingType in ['gemstone_reservation', 'gemstone_viewing', 'gemstone_consultation',
+                               'custom_inquiry', 'business_appointment']
+          && d.read is bool
+          && d.adminNotes is string && d.adminNotes.size() <= 5000
+          && d.customerName is string && d.customerName.size() >= 2 && d.customerName.size() <= 100
+          && d.phoneNumber is string && d.phoneNumber.size() <= 30
+          && d.email is string && d.email.size() <= 254
+          && d.message is string && d.message.size() <= 1500
+          && (!changed.hasAny(['updatedAt']) || d.updatedAt == request.time);
+      }
+
+      // Append-only audit trail of status changes and edits.
+      match /history/{entryId} {
+        allow read, delete: if isAdmin();
+        allow create: if isAdmin()
+          && request.resource.data.bookingId == bookingId
+          && request.resource.data.at == request.time
+          && request.resource.data.actorEmail == request.auth.token.email;
+        allow update: if false;
+      }
+    }
+
+    // Collection-group query for "recent activity" on the dashboard.
+    match /{path=**}/history/{entryId} {
+      allow read: if isAdmin();
+    }
+
+    // Server-only bookkeeping (duplicate guards, rate limits).
+    match /bookingGuards/{id} {
+      allow read, write: if false;
+    }
+    match /bookingRateLimits/{id} {
+      allow read, write: if false;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
