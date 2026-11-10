@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "seed": "node --env-file=.env.local scripts/seed-gemstones.mjs",
     "set-admin": "node --env-file=.env.local scripts/set-admin.mjs",
-    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes"
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
+    "deploy:rules:sa": "node --env-file=.env.local scripts/deploy-rules.mjs"
   },
   "dependencies": {
     "firebase": "^13.2.0",

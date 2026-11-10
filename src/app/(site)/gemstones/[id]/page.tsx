@@ -2,19 +2,29 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BookGemstoneButton } from "@/components/booking/BookGemstoneButton";
-import { GemVisual } from "@/components/site/GemVisual";
-import { formatPrice } from "@/lib/gemstones/format";
-import { getGemstone } from "@/lib/gemstones/server";
+import { GemGallery } from "@/components/site/GemGallery";
+import { GemstoneCard } from "@/components/site/GemstoneCard";
+import { cutLabel, gemType, typeLabel } from "@/lib/gemstones/catalog";
+import { formatPerCarat, formatPrice } from "@/lib/gemstones/format";
+import { listGemstones } from "@/lib/gemstones/server";
 import { GEMSTONE_STATUS_LABELS } from "@/lib/gemstones/types";
 
 async function GemstoneDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const gem = await getGemstone(id);
+  const all = await listGemstones();
+  const gem = all.find((g) => g.id === id);
   if (!gem) notFound();
+
+  const sameType = all.filter((g) => g.type === gem.type && g.status !== "sold");
+  const cutCounts: Record<string, number> = {};
+  for (const g of sameType) cutCounts[g.shape] = (cutCounts[g.shape] ?? 0) + 1;
+  const related = sameType.filter((g) => g.id !== gem.id).slice(0, 3);
+  const perCarat = formatPerCarat(gem);
 
   const available = gem.status === "available";
   const specs: Array<[string, string]> = [
-    ["Variety", gem.variety],
+    ["Gemstone", gem.variety],
+    ["Shape", cutLabel(gem.shape)],
     ["Weight", gem.carat ? `${gem.carat.toFixed(2)} ct` : ""],
     ["Colour", gem.color],
     ["Origin", gem.origin],
@@ -22,19 +32,39 @@ async function GemstoneDetail({ params }: { params: Promise<{ id: string }> }) {
     ["Cut", gem.cut],
     ["Dimensions", gem.dimensions],
     ["Treatment", gem.treatment],
+    ["Certificate", gem.certificate],
+    ["Stone ID", gem.id],
   ].filter((row): row is [string, string] => Boolean(row[1]));
 
   return (
+    <>
     <div className="grid gap-10 md:grid-cols-2 md:gap-16">
-      <div className="aspect-square border border-line bg-pearl md:sticky md:top-28 md:self-start">
-        <GemVisual gem={gem} />
+      <div className="md:sticky md:top-28 md:self-start">
+        <GemGallery
+          name={gem.name}
+          images={gem.images}
+          imageUrl={gem.imageUrl}
+          palette={gem.palette}
+          shape={gem.shape}
+          type={gem.type}
+          typeLabel={typeLabel(gem.type)}
+          typePlural={gemType(gem.type)?.plural ?? "gemstones"}
+          cutCounts={cutCounts}
+        />
       </div>
 
       <div>
-        <p className="eyebrow">{gem.variety}</p>
+        <p className="eyebrow">
+          <Link href={`/collection?type=${gem.type}`} className="hover:text-garnet">{gem.variety}</Link>
+          {" · "}
+          <Link href={`/collection?type=${gem.type}&cut=${gem.shape}`} className="hover:text-garnet">{cutLabel(gem.shape)}</Link>
+        </p>
         <h1 className="mt-2 font-serif text-4xl leading-tight text-ink sm:text-5xl">{gem.name}</h1>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <p className="text-xl text-ink">{formatPrice(gem)}</p>
+          <p className="text-xl text-ink">
+            {formatPrice(gem)}
+            {perCarat && <span className="ml-2 text-sm text-stone">{perCarat} / ct</span>}
+          </p>
           <span
             className={`px-2.5 py-1 text-[0.65rem] tracking-[0.2em] uppercase ${
               available ? "bg-success-soft text-success" : "bg-warning-soft text-warning"
@@ -44,7 +74,7 @@ async function GemstoneDetail({ params }: { params: Promise<{ id: string }> }) {
           </span>
         </div>
 
-        <p className="mt-6 leading-relaxed text-stone">{gem.description}</p>
+        {gem.description && <p className="mt-6 leading-relaxed whitespace-pre-line text-stone">{gem.description}</p>}
 
         {/* Booking call to action */}
         <div className="mt-8 border border-line bg-white p-5 sm:p-6">
@@ -72,8 +102,32 @@ async function GemstoneDetail({ params }: { params: Promise<{ id: string }> }) {
             </div>
           ))}
         </dl>
+
+        {gem.review && (
+          <section className="mt-10 border-l-2 border-gold bg-white px-5 py-5 sm:px-6">
+            <h2 className="eyebrow">Gemologist&apos;s review</h2>
+            <p className="mt-3 font-serif text-lg leading-relaxed whitespace-pre-line text-ink">{gem.review}</p>
+          </section>
+        )}
       </div>
     </div>
+
+    {related.length > 0 && (
+      <section className="mt-24">
+        <div className="mb-10 flex items-end justify-between gap-4">
+          <h2 className="font-serif text-3xl text-ink">More {(gemType(gem.type)?.plural ?? "gemstones").toLowerCase()}</h2>
+          <Link href={`/collection?type=${gem.type}`} className="text-sm text-garnet underline-offset-4 hover:underline">
+            See all
+          </Link>
+        </div>
+        <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+          {related.map((g) => (
+            <GemstoneCard key={g.id} gem={g} />
+          ))}
+        </div>
+      </section>
+    )}
+    </>
   );
 }
 
@@ -95,8 +149,8 @@ export default function GemstonePage({ params }: PageProps<"/gemstones/[id]">) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
       <nav className="mb-8 text-sm text-stone" aria-label="Breadcrumb">
-        <Link href="/gemstones" className="hover:text-garnet">
-          ← The collection
+        <Link href="/collection" className="hover:text-garnet">
+          ← Browse gemstones
         </Link>
       </nav>
       <Suspense fallback={<DetailSkeleton />}>

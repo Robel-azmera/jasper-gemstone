@@ -49,6 +49,7 @@ function Shell({ children }: { children: ReactNode }) {
               <NavLink href="/admin/bookings" badge={counts.Pending}>
                 Bookings
               </NavLink>
+              <NavLink href="/admin/gemstones">Gemstones</NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-2">

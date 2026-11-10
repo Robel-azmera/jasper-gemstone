@@ -1,48 +1,73 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
+import { GemSelector } from "@/components/site/GemSelector";
 import { GemstoneCard } from "@/components/site/GemstoneCard";
-import { listGemstones } from "@/lib/gemstones/server";
+import { countByTypeAndCut, listGemstones } from "@/lib/gemstones/server";
 
-export const metadata: Metadata = { title: "The Collection" };
+export const metadata: Metadata = {
+  title: "Choose your gemstone",
+  description: "Choose a gemstone, then a cut, and browse matching stones from our collection.",
+};
 
-async function Collection() {
-  const gems = await listGemstones();
-  if (!gems.length) {
-    return <p className="py-20 text-center text-stone">New stones are being added. Please check back soon.</p>;
-  }
-  // Available stones first.
-  const sorted = [...gems].sort(
-    (a, b) => Number(b.status === "available") - Number(a.status === "available"),
-  );
+async function Selector({ searchParams }: { searchParams: PageProps<"/gemstones">["searchParams"] }) {
+  const [gems, sp] = await Promise.all([listGemstones(), searchParams]);
+  const initialType = typeof sp.type === "string" ? sp.type : null;
+  const latest = gems.filter((g) => g.status !== "sold").slice(0, 3);
   return (
-    <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-      {sorted.map((g) => (
-        <GemstoneCard key={g.id} gem={g} />
+    <>
+      <GemSelector counts={countByTypeAndCut(gems)} initialType={initialType} />
+      {latest.length > 0 && (
+        <section className="mt-24">
+          <div className="mb-10 flex items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">Just added</p>
+              <h2 className="mt-2 font-serif text-4xl text-ink">New gems</h2>
+            </div>
+            <Link href="/collection" className="text-sm text-garnet underline-offset-4 hover:underline">
+              Browse all stones
+            </Link>
+          </div>
+          <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+            {latest.map((g) => (
+              <GemstoneCard key={g.id} gem={g} />
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+function SelectorSkeleton() {
+  return (
+    <div className="space-y-16" aria-hidden>
+      {[0, 1].map((r) => (
+        <div key={r}>
+          <div className="mb-6 h-9 w-72 animate-pulse bg-pearl" />
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-square animate-pulse bg-pearl" />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
-export default function GemstonesPage() {
+export default function GemstonesPage({ searchParams }: PageProps<"/gemstones">) {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
       <header className="mb-14 text-center">
         <p className="eyebrow">The collection</p>
-        <h1 className="mt-3 font-serif text-5xl text-ink">Our gemstones</h1>
+        <h1 className="mt-3 font-serif text-5xl text-ink">Find your gemstone</h1>
         <p className="mx-auto mt-4 max-w-lg text-stone">
-          Open any stone to see its details and request a reservation or private viewing.
+          Choose a gemstone, then the cut you love. We&apos;ll show you every matching stone in our collection.
         </p>
       </header>
-      <Suspense
-        fallback={
-          <div className="grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="aspect-[4/5] animate-pulse bg-pearl" />
-            ))}
-          </div>
-        }
-      >
-        <Collection />
+      <Suspense fallback={<SelectorSkeleton />}>
+        <Selector searchParams={searchParams} />
       </Suspense>
     </div>
   );

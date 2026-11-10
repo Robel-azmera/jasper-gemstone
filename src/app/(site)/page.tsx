@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { GemSelector } from "@/components/site/GemSelector";
 import { GemstoneCard } from "@/components/site/GemstoneCard";
-import { listGemstones } from "@/lib/gemstones/server";
+import { countByTypeAndCut, listGemstones } from "@/lib/gemstones/server";
+
+async function ShopBySelection() {
+  const gems = await listGemstones();
+  return <GemSelector counts={countByTypeAndCut(gems)} />;
+}
 
 async function FeaturedGemstones() {
   const gems = (await listGemstones()).filter((g) => g.featured).slice(0, 3);
@@ -53,13 +59,23 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6">
+        <div className="mb-10 text-center">
+          <p className="eyebrow">Shop by gemstone &amp; cut</p>
+          <h2 className="mt-2 font-serif text-4xl text-ink">Find your stone</h2>
+        </div>
+        <Suspense fallback={<div className="h-96 animate-pulse bg-pearl" aria-hidden />}>
+          <ShopBySelection />
+        </Suspense>
+      </section>
+
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Featured</p>
             <h2 className="mt-2 font-serif text-4xl text-ink">Selected stones</h2>
           </div>
-          <Link href="/gemstones" className="text-sm text-garnet underline-offset-4 hover:underline">
+          <Link href="/collection" className="text-sm text-garnet underline-offset-4 hover:underline">
             See all
           </Link>
         </div>

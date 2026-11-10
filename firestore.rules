@@ -14,10 +14,43 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Public catalogue.
+    // Public catalogue. Admins manage it from /admin/gemstones.
     match /gemstones/{gemstoneId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdmin()
+        && gemstoneId.matches('^[a-z0-9][a-z0-9-]{1,79}$')
+        && validGemstone(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin()
+        && validGemstone(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['createdAt']);
+      allow delete: if isAdmin();
+
+      function validGemstone(d) {
+        return d.name is string && d.name.size() >= 2 && d.name.size() <= 120
+          && d.type is string && d.type.size() <= 40
+          && d.shape is string && d.shape.size() <= 40
+          && d.status in ['available', 'reserved', 'sold']
+          && (d.price == null || (d.price is number && d.price >= 0))
+          && (d.carat == null || (d.carat is number && d.carat >= 0))
+          && d.description is string && d.description.size() <= 5000
+          && d.review is string && d.review.size() <= 5000
+          && d.images is list && d.images.size() <= 12
+          && d.featured is bool
+          && d.updatedAt == request.time;
+      }
+    }
+
+    // Gemstone photos (bytes, <= 1 MB each). Served publicly by the server
+    // route /images/gems/{id}, so clients never read them directly.
+    match /gemstoneImages/{imageId} {
+      allow read, update: if false;
+      allow create: if isAdmin()
+        && imageId.matches('^[A-Za-z0-9_-]{8,64}$')
+        && request.resource.data.data is bytes
+        && request.resource.data.data.size() <= 1000000
+        && request.resource.data.contentType in ['image/webp', 'image/jpeg', 'image/png'];
+      allow delete: if isAdmin();
     }
 
     match /bookings/{bookingId} {

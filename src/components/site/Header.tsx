@@ -20,7 +20,10 @@ export function Header() {
         </Link>
         <nav className="flex items-center gap-1 sm:gap-4">
           <Link href="/gemstones" className="btn btn-ghost btn-sm px-2 sm:px-3">
-            Collection
+            Gemstones
+          </Link>
+          <Link href="/collection" className="btn btn-ghost btn-sm hidden px-3 sm:inline-flex">
+            Browse
           </Link>
           <Link href="/book" className="btn btn-primary btn-sm">
             <span className="sm:hidden">Consult</span>
