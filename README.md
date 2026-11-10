@@ -72,6 +72,23 @@ Server-only collections are `bookingGuards` (duplicate and idempotency guards) a
 Without Firebase credentials the public site still renders using the bundled demo catalogue
 (`src/data/demo-gemstones.json`). Booking submission returns a friendly "temporarily unavailable" message in that case.
 
+## Deploying to Vercel
+
+1. **Environment variables** go in Vercel → Project → Settings → Environment Variables. Apply them to Production and Preview:
+
+   | Name | Value |
+   | --- | --- |
+   | `NEXT_PUBLIC_FIREBASE_API_KEY`, `…_AUTH_DOMAIN`, `…_PROJECT_ID`, `…_STORAGE_BUCKET`, `…_MESSAGING_SENDER_ID`, `…_APP_ID` | same as `.env.local` |
+   | `FIREBASE_SERVICE_ACCOUNT_KEY` | the base64 value from `.env.local` (secret) |
+   | `BOOKING_HASH_SALT` | same as `.env.local` (secret) |
+   | `NEXT_PUBLIC_SITE_URL` | optional: your custom domain, e.g. `https://jaspergemstone.com`. Defaults to the Vercel production domain. |
+   | `BOOKING_RATE_LIMIT_PER_HOUR`, Turnstile and Resend keys | optional |
+
+   `NEXT_PUBLIC_*` values are baked in at build time, so **redeploy** after changing them.
+2. **Firebase → Authentication → Settings → Authorized domains:** add your Vercel domain(s), e.g.
+   `jasper-gemstone.vercel.app` and any custom domain. Without this, admin sign-in fails.
+3. Functions run in `fra1` (Frankfurt), set in `vercel.json`, close to the Firestore `eur3` database.
+
 ## Project layout
 
 ```

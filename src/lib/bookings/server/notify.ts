@@ -1,6 +1,7 @@
 import "server-only";
 
 import { BOOKING_TYPE_LABELS, formatTimeSlot, type BookingType } from "../constants";
+import { siteUrl } from "@/lib/site";
 import { escapeHtml } from "../sanitize";
 
 export interface NewBookingNotification {
@@ -31,8 +32,7 @@ export async function sendNewBookingEmail(b: NewBookingNotification): Promise<vo
   const from = process.env.BOOKING_FROM_EMAIL;
   if (!apiKey || !to || !from) return;
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
-  const link = site ? `${site}/admin/bookings?open=${encodeURIComponent(b.bookingId)}` : "";
+  const link = `${siteUrl()}/admin/bookings?open=${encodeURIComponent(b.bookingId)}`;
   const rows: Array<[string, string]> = [
     ["Reference", b.referenceNumber],
     ["Type", BOOKING_TYPE_LABELS[b.bookingType]],

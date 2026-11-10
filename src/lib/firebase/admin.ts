@@ -18,12 +18,15 @@ function readServiceAccount():
   | null {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.trim();
   if (raw) {
-    const json = raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
-    const parsed = JSON.parse(json) as {
-      project_id: string;
-      client_email: string;
-      private_key: string;
-    };
+    let parsed: { project_id: string; client_email: string; private_key: string };
+    try {
+      const json = raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8");
+      parsed = JSON.parse(json);
+    } catch {
+      throw new Error(
+        "FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON or base64-encoded JSON. Re-copy the full value.",
+      );
+    }
     return {
       projectId: parsed.project_id,
       clientEmail: parsed.client_email,

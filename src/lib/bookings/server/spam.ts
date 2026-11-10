@@ -15,6 +15,9 @@ export function sha256(value: string): string {
 }
 
 export function clientIp(headers: Headers): string {
+  // On Vercel these headers are set by the platform and can't be spoofed.
+  const vercel = headers.get("x-vercel-forwarded-for") ?? headers.get("x-real-ip");
+  if (vercel) return vercel.split(",")[0].trim();
   const forwarded = headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return headers.get("x-real-ip") ?? headers.get("cf-connecting-ip") ?? "unknown";
